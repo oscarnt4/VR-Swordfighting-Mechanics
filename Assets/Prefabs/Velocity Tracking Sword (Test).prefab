@@ -1880,7 +1880,7 @@ GameObject:
   - component: {fileID: 7660694870382244762}
   - component: {fileID: 1936777430899052402}
   m_Layer: 0
-  m_Name: Velocity Tracking Sword
+  m_Name: Velocity Tracking Sword (Test)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

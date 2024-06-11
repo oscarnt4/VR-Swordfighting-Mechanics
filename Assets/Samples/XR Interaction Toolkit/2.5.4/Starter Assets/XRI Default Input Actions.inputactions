@@ -1026,6 +1026,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Sprint",
+                    "type": "Button",
+                    "id": "e78c18c1-8dd3-455a-9cf9-bd6bc5e73b9e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1114,6 +1123,17 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Snap Turn",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4d3ce5e9-13db-42e0-9107-0c7c24ca4273",
+                    "path": "<XRController>{LeftHand}/{Primary2DAxisClick}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "Sprint",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1822,6 +1842,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Dash",
+                    "type": "Value",
+                    "id": "bd9d769b-ca14-401e-ae02-c406d842cba7",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Crouch",
+                    "type": "Button",
+                    "id": "f4f7c1bd-ba1e-4d8b-8fc4-1903b0e44818",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Jump",
+                    "type": "Value",
+                    "id": "1442d7f6-5e13-4933-89b9-5106244ab91e",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -1910,6 +1957,39 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Snap Turn",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d18fab0e-bf3c-4b8d-af9e-89335a4ad7f0",
+                    "path": "<XRController>{RightHand}/{Primary2DAxisClick}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "46fdff3a-4f4c-46be-a8ba-267e3137a2ac",
+                    "path": "<XRController>{RightHand}/{Primary2DAxis}",
+                    "interactions": "Sector(directions=2,sweepBehavior=1)",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "Dash",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "32327e17-923a-43ae-a3f9-40eee7e5070a",
+                    "path": "<XRController>{RightHand}/{Primary2DAxis}",
+                    "interactions": "Sector(directions=1,sweepBehavior=2)",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "Jump",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
