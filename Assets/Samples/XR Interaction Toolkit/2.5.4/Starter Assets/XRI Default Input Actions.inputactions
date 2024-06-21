@@ -1975,7 +1975,7 @@
                     "name": "",
                     "id": "46fdff3a-4f4c-46be-a8ba-267e3137a2ac",
                     "path": "<XRController>{RightHand}/{Primary2DAxis}",
-                    "interactions": "Sector(directions=2,sweepBehavior=1)",
+                    "interactions": "Sector(directions=2,sweepBehavior=3)",
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Dash",

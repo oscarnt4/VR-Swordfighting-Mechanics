@@ -1,15 +1,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Mime;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.AffordanceSystem.Receiver.Primitives;
 
 public class BasicSwordDamage : Damage
 {
-    [SerializeField] float maxDamageSwingDistance = 1f;
+    [Header("Damage")]
+    [SerializeField] float maxDamageSwingDistance = 1.15f;
+    [SerializeField] float zeroDamageThreshold = 0.5f;
+    [SerializeField] float discreteDamageIncrement = 0.1f;
+    [SerializeField] bool fixedDamageAmount = false;
+    [SerializeField] float timeBectweenConsecutiveHits = 0.3f;
+    [Header("Stun")]
+    [SerializeField] float stunTimePerDamageAmount = 0.015f;
+    [SerializeField] Transform swordTip;
+    [SerializeField] Transform head;
+    [Header("Visuals")]
+    [SerializeField] Renderer _renderer;
 
     private XRSimpleInteractable simpleInteractable;
     private MomentumTracker momentumTracker;
+    private GrabableObject grabableObject;
 
     private bool momentumTrackerAttached = false;
     private float damageAmount = 0f;
@@ -20,11 +34,21 @@ public class BasicSwordDamage : Damage
     private void Awake()
     {
         simpleInteractable = GetComponent<XRSimpleInteractable>();
+        grabableObject = GetComponent<GrabableObject>();
     }
     private void Start()
     {
         simpleInteractable.selectEntered.AddListener(AttachMomentumTracker);
         simpleInteractable.selectExited.AddListener(RemoveMomentumTracker);
+    }
+    private void Update()
+    {
+        if (momentumTracker != null)
+        {
+            //Debug
+            Color color = Color.Lerp(Color.green, Color.red, momentumTracker.largestDistanceTravelled > maxDamageSwingDistance ? 1 : momentumTracker.largestDistanceTravelled / maxDamageSwingDistance);
+            _renderer.material.color = Color.HSVToRGB(color.grayscale, 1f, 1f);
+        }
     }
 
     public override void InflictDamage(IDamageable target)
@@ -37,19 +61,32 @@ public class BasicSwordDamage : Damage
 
     private void OnCollisionEnter(Collision collision)
     {
+        // Inflict damage
         IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
-        if (damageable != null && DateTime.Now > timeOfLastHit.AddSeconds(0.3))
+        if (damageable != null && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
         {
             if (momentumTrackerAttached) CalculateMomentumDamage();
             else CalculateVelocityDamage();
             InflictDamage(damageable);
             timeOfLastHit = DateTime.Now;
         }
+        // Implement stun
+        BasicSwordDamage swordDamage = collision.gameObject.GetComponent<BasicSwordDamage>();
+        if(swordDamage != null)
+        {
+            float collidedWithPointDistance = swordDamage.GetTipDistance();
+            float thisPointDistance = this.GetTipDistance();
+
+            if(thisPointDistance > collidedWithPointDistance)
+            {
+                StartCoroutine(ImplementStun());
+            }
+        }
     }
 
     private void AttachMomentumTracker(SelectEnterEventArgs args)
     {
-        StartCoroutine(AttachTrackerCoroutine());        
+        StartCoroutine(AttachTrackerCoroutine());
     }
 
     private IEnumerator AttachTrackerCoroutine()
@@ -65,15 +102,58 @@ public class BasicSwordDamage : Damage
         momentumTrackerAttached = false;
     }
 
-    private void CalculateMomentumDamage()
+    private float CalculateMomentumDamage()
     {
-        Debug.Log(momentumTracker.largestDistanceTravelled);
-        damageAmount = (momentumTracker.largestDistanceTravelled > maxDamageSwingDistance ? 1 : momentumTracker.largestDistanceTravelled / maxDamageSwingDistance) * maxDamage; //Damage reduction based on swing distance
+        float distanceTravelledRatio = Mathf.Clamp01(momentumTracker.largestDistanceTravelled / maxDamageSwingDistance);
+        float damageRatio = -1f;
+        if (fixedDamageAmount)
+        {
+            if (distanceTravelledRatio < zeroDamageThreshold) damageRatio = 0f;
+            else damageRatio = 1f;
+        }
+        else
+        {
+            if (distanceTravelledRatio >= 0 && distanceTravelledRatio < zeroDamageThreshold) damageRatio = 0f; //Check if distanceTravelledRatio is too low to cause damage
+            if (distanceTravelledRatio >= 1f) damageRatio = 1f; // Return 1 is distance ratio it higher than or equal to 1
+
+            float lowerLimit = zeroDamageThreshold;
+            while (damageRatio == -1f && lowerLimit < 1f) // Check which threshold the distance ratio falls within and then output the x^2 value of the lower limit as the damage ratio
+            {
+                if (distanceTravelledRatio >= lowerLimit && distanceTravelledRatio < lowerLimit + discreteDamageIncrement)
+                {
+                    damageRatio = Mathf.Pow(lowerLimit, 2f);
+                    break;
+                }
+                lowerLimit += discreteDamageIncrement;
+            }
+        }
+
+        return damageAmount = damageRatio * maxDamage; //Damage reduction based on swing distance
     }
 
-    private void CalculateVelocityDamage()
+    private float CalculateVelocityDamage()
     {
         Debug.Log("Veocity damage used");
-        damageAmount = maxDamage;
+        return damageAmount = maxDamage;
     }
+
+    public float GetTipDistance()
+    {
+        if (head == null) return 0; //Mathf.Infinity;
+        return Vector3.Distance(head.position, swordTip.position); //work out a better way to get the head position and return infinity otherwise
+    }
+
+    private IEnumerator ImplementStun()
+    {
+        float stunTime = CalculateMomentumDamage() * stunTimePerDamageAmount;
+        grabableObject.FreezeGrabbedObject();
+        yield return new WaitForSeconds(stunTime);
+        grabableObject.ReturnObjectToGrabPosition();
+    }
+
+    private void MoveSwordIntoGrabbedPosition()// move sword into correct hand position before attaching wrist (also used for after the stun)
+    {
+
+    }
+
 }

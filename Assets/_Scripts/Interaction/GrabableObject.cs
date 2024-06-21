@@ -16,6 +16,8 @@ public class GrabableObject : MonoBehaviour
 
     private XRSimpleInteractable simpleInteractable;
     private Rigidbody _rigidbody;
+    private Vector3 currentVelocity;
+    private ConfigurableJoint attachedJoint;
 
     private void Awake()
     {
@@ -43,8 +45,9 @@ public class GrabableObject : MonoBehaviour
         }
         args.interactorObject.transform.GetChild(0).gameObject.SetActive(false);
         this.transform.SetParent(args.interactorObject.transform);
-        args.interactorObject.transform.GetComponent<ConfigurableJoint>().connectedBody = _rigidbody;
-    }
+        attachedJoint = args.interactorObject.transform.GetComponent<ConfigurableJoint>();
+        attachedJoint.connectedBody = _rigidbody;
+    } 
 
     private void DisableGrab(SelectExitEventArgs args)
     {
@@ -56,8 +59,21 @@ public class GrabableObject : MonoBehaviour
         {
             rightGrabbedHand.SetActive(false);
         }
-        args.interactorObject.transform.GetComponent<ConfigurableJoint>().connectedBody = null;
+        attachedJoint.connectedBody = null;
         this.transform.SetParent(null);
         args.interactorObject.transform.GetChild(0).gameObject.SetActive(true);
+        this.GetComponent<Rigidbody>().useGravity = true;
+    }
+
+    public void ReturnObjectToGrabPosition()
+    {
+
+    }
+
+    public void FreezeGrabbedObject()
+    {
+        attachedJoint.connectedBody = null;
+        this.transform.SetParent(null);
+        this.GetComponent<Rigidbody>().useGravity = false;
     }
 }
