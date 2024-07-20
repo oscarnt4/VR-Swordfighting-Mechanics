@@ -30,8 +30,16 @@ public class PlayerController : MonoBehaviour
     private DynamicMoveProvider moveProvider;
     private CharacterController characterController;
 
+    private PlayerStateMachine _stateMachine;
+    private WalkingState _walkingState;
+    private SprintingState _sprintingState;
+    private CrouchingState _crouchingState;
+    private DashingState _dashingState;
+
     private bool canDash = true;
     private float startingCameraYOffset;
+    private float dashStartTime;
+    private float dashEndTime;
 
     private enum PlayerState { Walking, Sprinting, Dashing, Jumping, Crouching }
     private PlayerState currentState;
@@ -41,6 +49,12 @@ public class PlayerController : MonoBehaviour
         xrRig = GetComponent<XROrigin>();
         moveProvider = GetComponent<DynamicMoveProvider>();
         characterController = GetComponent<CharacterController>();
+
+        _stateMachine = PlayerStateMachine.Instance;
+        _walkingState = new WalkingState(this);
+        _sprintingState = new SprintingState(this);
+        _crouchingState = new CrouchingState(this);
+        _dashingState = new DashingState(this);
     }
 
     private void Start()
@@ -78,60 +92,29 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        MovementStateMachine();
-        Debug.DrawRay(moveProvider.headTransform.position + Vector3.down * characterController.height / 2f, Vector3.down, Color.red); // Slope check raycast
-    }
-
-    private void MovementStateMachine()
-    {
-        switch (currentState)
-        {
-            case PlayerState.Walking:
-                moveProvider.moveSpeed = walkSpeed;
-                break;
-            case PlayerState.Sprinting:
-                if (moveInput.action.ReadValue<Vector2>().y <= 0.5f)
-                {
-                    currentState = PlayerState.Walking;
-                    break;
-                }
-                moveProvider.moveSpeed = sprintSpeed;
-                break;
-            case PlayerState.Dashing:
-                StartCoroutine(DashCoroutine());
-                currentState = PlayerState.Walking;
-                break;
-            case PlayerState.Jumping:
-                currentState = PlayerState.Walking;
-                break;
-            case PlayerState.Crouching:
-                moveProvider.moveSpeed = crouchSpeed;
-                break;
-            default:
-                currentState = PlayerState.Walking;
-                break;
-        }
+        _stateMachine.Update();
     }
 
     private void OnSprint(InputAction.CallbackContext context)
     {
-        if (currentState == PlayerState.Crouching)
+        _stateMachine.ChangeState(_sprintingState);
+    }
+
+    private void OnCrouch(InputAction.CallbackContext context)
+    {
+        if (_stateMachine.CurrentState is CrouchingState)
         {
-            StartCoroutine(StandingCoroutine());
-            currentState = PlayerState.Walking;
+            _stateMachine.ChangeState(_walkingState);
         }
-        if (currentState == PlayerState.Walking && characterController.isGrounded)
+        else
         {
-            currentState = PlayerState.Sprinting;
+            _stateMachine.ChangeState(_crouchingState);
         }
     }
 
     private void OnDash(InputAction.CallbackContext context)
     {
-        if (currentState != PlayerState.Crouching && canDash && characterController.isGrounded)
-        {
-            currentState = PlayerState.Dashing;
-        }
+        _stateMachine.ChangeState(_dashingState);
     }
 
     private void OnJump(InputAction.CallbackContext context)
@@ -144,25 +127,34 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnCrouch(InputAction.CallbackContext context)
+    public void EnterWalk()
     {
-        if (currentState == PlayerState.Crouching)
-        {
-            currentState = PlayerState.Walking;
-            StartCoroutine(StandingCoroutine());
-        }
-        else
-        {
-            currentState = PlayerState.Crouching;
-            StartCoroutine(CrouchingCoroutine());
-        }
+        moveProvider.moveSpeed = walkSpeed;
     }
 
-    private IEnumerator DashCoroutine()
+    public void EnterSprint()
     {
-        canDash = false;
-        currentState = PlayerState.Dashing;
+        moveProvider.moveSpeed = sprintSpeed;
+    }
 
+    public void EnterCrouch()
+    {
+        moveProvider.moveSpeed = crouchSpeed;
+        StartCoroutine(CrouchingCoroutine());
+    }
+
+    public void ExitCrouch()
+    {
+        StartCoroutine(StandingCoroutine());
+    }
+
+    public void EnterDash()
+    {
+        dashStartTime = Time.time;
+    }
+
+    public bool ExecuteDash()
+    {
         RaycastHit slopeHit;
         DetectSlope(out slopeHit);
         Vector3 dashDirection = Vector3.ProjectOnPlane(
@@ -170,17 +162,32 @@ public class PlayerController : MonoBehaviour
             slopeHit.normal
             ).normalized;
 
-        float startTime = Time.time;
+        characterController.Move(dashDirection * (dashDistance / dashDuration) * Time.deltaTime);
+        float dashTime = dashStartTime + dashDuration;
+        //Debug.Log(Time.time + " || " + dashTime + " || " + (Time.time >= dashTime));
 
-        while (Time.time < startTime + dashDuration)
-        {
-            characterController.Move(dashDirection * dashDistance / dashDuration * Time.deltaTime);
-            yield return null;
-        }
+        return Time.time >= (dashStartTime + dashDuration);
+    }
 
-        currentState = PlayerState.Walking;
-        yield return new WaitForSeconds(0.5f);
-        canDash = true;
+    public void ExitDash()
+    {
+        characterController.Move(Vector3.zero);
+        dashEndTime = Time.time;
+    }
+
+    public bool IsGrounded()
+    {
+        return characterController.isGrounded;
+    }
+
+    public bool MoveForwardHeld()
+    {
+        return moveInput.action.ReadValue<Vector2>().y > 0.5f;
+    }
+
+    public bool OutsideDashWindow()
+    {
+        return Time.time >= dashEndTime + 0.5f;
     }
 
     private bool DetectSlope(out RaycastHit slopeHit)
@@ -189,7 +196,7 @@ public class PlayerController : MonoBehaviour
                && slopeHit.normal != Vector3.up;
     }
 
-    private IEnumerator CrouchingCoroutine()
+    public IEnumerator CrouchingCoroutine()
     {
         while (xrRig.CameraYOffset > startingCameraYOffset / 2f)
         {
@@ -199,7 +206,7 @@ public class PlayerController : MonoBehaviour
         xrRig.CameraYOffset = startingCameraYOffset / 2f;
     }
 
-    private IEnumerator StandingCoroutine()
+    public IEnumerator StandingCoroutine()
     {
         while (xrRig.CameraYOffset < startingCameraYOffset)
         {

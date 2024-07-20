@@ -1035,6 +1035,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "aaaa",
+                    "type": "Button",
+                    "id": "9c89aa49-5bb8-4663-8225-c973deed3777",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1134,6 +1143,17 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Sprint",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "494f75b1-ac58-49de-bb45-6ec5b869eaeb",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "aaaa",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
