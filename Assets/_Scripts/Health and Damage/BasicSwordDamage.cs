@@ -40,6 +40,10 @@ public class BasicSwordDamage : Damage
     {
         simpleInteractable.selectEntered.AddListener(AttachMomentumTracker);
         simpleInteractable.selectExited.AddListener(RemoveMomentumTracker);
+        if(this.transform.parent.GetComponent<MomentumTracker>() != null)
+        {
+            StartCoroutine(AttachTrackerCoroutine());
+        }
     }
     private void Update()
     {
@@ -145,10 +149,13 @@ public class BasicSwordDamage : Damage
 
     private IEnumerator ImplementStun()
     {
-        float stunTime = CalculateMomentumDamage() * stunTimePerDamageAmount;
-        grabableObject.FreezeGrabbedObject();
+        float stunTime = CalculateMomentumDamage() * stunTimePerDamageAmount * 10;
+        ActionBasedController handController = momentumTracker.GetComponentInParent<ActionBasedController>();
+        //grabableObject.FreezeGrabbedObject();
+        handController.enabled = false;
         yield return new WaitForSeconds(stunTime);
-        grabableObject.ReturnObjectToGrabPosition();
+        //grabableObject.ReturnObjectToGrabPosition();
+        handController.enabled = true;
     }
 
     private void MoveSwordIntoGrabbedPosition()// move sword into correct hand position before attaching wrist (also used for after the stun)
