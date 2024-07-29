@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoxHealth : Health
+public class BasicEnemyHealth : Health
 {
-    Renderer _renderer;
+    [SerializeField] Renderer _renderer;
+    [SerializeField] GameObject basicEnemyPrefab;
 
     private void Awake()
     {
-        _renderer = GetComponent<Renderer>();
+        //_renderer = GetComponent<Renderer>();
     }
 
     public override void Start()
@@ -32,6 +33,7 @@ public class BoxHealth : Health
     protected override void Die()
     {
         base.Die();
+        Instantiate(basicEnemyPrefab);
         Destroy(this.gameObject);
     }
 

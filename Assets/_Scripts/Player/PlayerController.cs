@@ -62,6 +62,7 @@ public class PlayerController : MonoBehaviour
         moveProvider.moveSpeed = walkSpeed;
         currentState = PlayerState.Walking;
         startingCameraYOffset = xrRig.CameraYOffset;
+        _stateMachine.ChangeState(_walkingState);
     }
 
     private void OnEnable()
@@ -140,12 +141,12 @@ public class PlayerController : MonoBehaviour
     public void EnterCrouch()
     {
         moveProvider.moveSpeed = crouchSpeed;
-        StartCoroutine(CrouchingCoroutine());
+        //StartCoroutine(CrouchingCoroutine());
     }
 
     public void ExitCrouch()
     {
-        StartCoroutine(StandingCoroutine());
+        //StartCoroutine(StandingCoroutine());
     }
 
     public void EnterDash()

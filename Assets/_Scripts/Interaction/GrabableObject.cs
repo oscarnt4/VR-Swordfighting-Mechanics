@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 
@@ -13,11 +14,15 @@ public class GrabableObject : MonoBehaviour
     [Header("Pre Positioned Hands")]
     [SerializeField] GameObject leftGrabbedHand;
     [SerializeField] GameObject rightGrabbedHand;
+    [Header("Grab Position")]
+    [SerializeField] GameObject grabAnchor;
 
     private XRSimpleInteractable simpleInteractable;
     private Rigidbody _rigidbody;
     private Vector3 currentVelocity;
     private ConfigurableJoint attachedJoint;
+
+    private GameObject hand;//test
 
     private void Awake()
     {
@@ -35,6 +40,7 @@ public class GrabableObject : MonoBehaviour
 
     private void EnableGrab(SelectEnterEventArgs args)
     {
+        //Activate sword hands
         if (args.interactorObject.transform.tag == "Left Hand")
         {
             leftGrabbedHand.SetActive(true);
@@ -43,7 +49,16 @@ public class GrabableObject : MonoBehaviour
         {
             rightGrabbedHand.SetActive(true);
         }
+        //Deactivate controller hands
         args.interactorObject.transform.GetChild(0).gameObject.SetActive(false);
+
+        //Match anchor rotation
+        //Quaternion rotationOffset = Quaternion.Inverse(args.interactorObject.transform.rotation) * grabAnchor.transform.rotation;
+        //this.transform.rotation = rotationOffset * this.transform.rotation;
+        //Match anchor position
+        Vector3 offset = args.interactorObject.transform.position - grabAnchor.transform.position;
+        this.transform.position += offset;
+        //Attach sword to controller hands
         this.transform.SetParent(args.interactorObject.transform);
         attachedJoint = args.interactorObject.transform.GetComponent<ConfigurableJoint>();
         attachedJoint.connectedBody = _rigidbody;
@@ -68,12 +83,5 @@ public class GrabableObject : MonoBehaviour
     public void ReturnObjectToGrabPosition()
     {
 
-    }
-
-    public void FreezeGrabbedObject()
-    {
-        attachedJoint.connectedBody = null;
-        this.transform.SetParent(null);
-        this.GetComponent<Rigidbody>().useGravity = false;
     }
 }

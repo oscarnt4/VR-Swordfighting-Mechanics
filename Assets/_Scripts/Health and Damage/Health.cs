@@ -10,7 +10,7 @@ public class Health : MonoBehaviour, IDamageable
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
 
-    protected virtual void Start()
+    public virtual void Start()
     {
         currentHealth = maxHealth;
     }

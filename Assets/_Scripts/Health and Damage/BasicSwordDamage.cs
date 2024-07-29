@@ -28,6 +28,8 @@ public class BasicSwordDamage : Damage
     private bool momentumTrackerAttached = false;
     private float damageAmount = 0f;
     private DateTime timeOfLastHit = DateTime.Now;
+    private bool isStunned = false;
+    private bool canAttack = true;
 
     public override float DamageAmount => damageAmount;
 
@@ -40,7 +42,7 @@ public class BasicSwordDamage : Damage
     {
         simpleInteractable.selectEntered.AddListener(AttachMomentumTracker);
         simpleInteractable.selectExited.AddListener(RemoveMomentumTracker);
-        if(this.transform.parent.GetComponent<MomentumTracker>() != null)
+        if (this.transform.parent.GetComponent<MomentumTracker>() != null)
         {
             StartCoroutine(AttachTrackerCoroutine());
         }
@@ -52,6 +54,10 @@ public class BasicSwordDamage : Damage
             //Debug
             Color color = Color.Lerp(Color.green, Color.red, momentumTracker.largestDistanceTravelled > maxDamageSwingDistance ? 1 : momentumTracker.largestDistanceTravelled / maxDamageSwingDistance);
             _renderer.material.color = Color.HSVToRGB(color.grayscale, 1f, 1f);
+        }
+        if (!canAttack)
+        {
+            canAttack = CalculateMomentumDamage() == 0;
         }
     }
 
@@ -65,25 +71,34 @@ public class BasicSwordDamage : Damage
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Inflict damage
-        IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
-        if (damageable != null && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
+        if (!isStunned && canAttack)
         {
-            if (momentumTrackerAttached) CalculateMomentumDamage();
-            else CalculateVelocityDamage();
-            InflictDamage(damageable);
-            timeOfLastHit = DateTime.Now;
-        }
-        // Implement stun
-        BasicSwordDamage swordDamage = collision.gameObject.GetComponent<BasicSwordDamage>();
-        if(swordDamage != null)
-        {
-            float collidedWithPointDistance = swordDamage.GetTipDistance();
-            float thisPointDistance = this.GetTipDistance();
+            BasicSwordDamage swordDamage = collision.gameObject.GetComponent<BasicSwordDamage>();
+            IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
 
-            if(thisPointDistance > collidedWithPointDistance)
+            // Implement stun
+            if (swordDamage != null)
             {
-                StartCoroutine(ImplementStun());
+                canAttack = false;
+
+                float collidedWithPointDistance = swordDamage.GetTipDistance();
+                float thisPointDistance = this.GetTipDistance();
+
+                if (thisPointDistance > collidedWithPointDistance)
+                {
+                    StartCoroutine(ImplementStun());
+                }
+            }
+            // Inflict damage
+            else if (damageable != null && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
+            {
+                canAttack = false;
+
+                if (momentumTrackerAttached) CalculateMomentumDamage();
+                else CalculateVelocityDamage();
+
+                InflictDamage(damageable);
+                timeOfLastHit = DateTime.Now;
             }
         }
     }
@@ -149,13 +164,15 @@ public class BasicSwordDamage : Damage
 
     private IEnumerator ImplementStun()
     {
-        float stunTime = CalculateMomentumDamage() * stunTimePerDamageAmount * 10;
+        isStunned = true;
+        float stunTime = CalculateMomentumDamage() * stunTimePerDamageAmount;// * 10;
         ActionBasedController handController = momentumTracker.GetComponentInParent<ActionBasedController>();
         //grabableObject.FreezeGrabbedObject();
         handController.enabled = false;
         yield return new WaitForSeconds(stunTime);
         //grabableObject.ReturnObjectToGrabPosition();
         handController.enabled = true;
+        isStunned = false;
     }
 
     private void MoveSwordIntoGrabbedPosition()// move sword into correct hand position before attaching wrist (also used for after the stun)
