@@ -20,6 +20,7 @@ public class BasicSwordDamage : Damage
     [SerializeField] Transform head;
     [Header("Visuals")]
     [SerializeField] Renderer _renderer;
+    [SerializeField] BlockingTrigger enemyBlockingTrigger;
 
     private XRSimpleInteractable simpleInteractable;
     private MomentumTracker momentumTracker;
@@ -40,6 +41,7 @@ public class BasicSwordDamage : Damage
     }
     private void Start()
     {
+        head = Camera.main.transform;
         simpleInteractable.selectEntered.AddListener(AttachMomentumTracker);
         simpleInteractable.selectExited.AddListener(RemoveMomentumTracker);
         if (this.transform.parent.GetComponent<MomentumTracker>() != null)
@@ -87,6 +89,10 @@ public class BasicSwordDamage : Damage
                 if (thisPointDistance > collidedWithPointDistance)
                 {
                     StartCoroutine(ImplementStun());
+                } 
+                else
+                {
+                    if(enemyBlockingTrigger != null) enemyBlockingTrigger.EndBlock();
                 }
             }
             // Inflict damage

@@ -1825,8 +1825,8 @@ MonoBehaviour:
   timeBectweenConsecutiveHits: 0.3
   stunTimePerDamageAmount: 0.05
   swordTip: {fileID: 2595166284582586639}
-  head: {fileID: 0}
   _renderer: {fileID: 5773686011291250843}
+  enemyBlockingTrigger: {fileID: 0}
 --- !u!1 &6869740746909640352
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,8 +7,11 @@ public class BasicEnemyHealth : Health
     [SerializeField] Renderer _renderer;
     [SerializeField] GameObject basicEnemyPrefab;
 
+    private BlockingTrigger blockingTrigger;
+
     private void Awake()
     {
+        blockingTrigger = GetComponent<BlockingTrigger>();
         //_renderer = GetComponent<Renderer>();
     }
 

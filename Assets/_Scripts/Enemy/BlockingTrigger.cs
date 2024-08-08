@@ -10,14 +10,16 @@ public class BlockingTrigger : MonoBehaviour
     [SerializeField] float blockSpeed = 10f;
     [SerializeField] float blockRotationSpeed = 50f;
 
-    private Vector3 targetPosition;
+    private Vector3 localTargetPosition;
     private Quaternion targetRotation;
-    private Vector3 weaponStartPosition;
-    private Quaternion weaponStartRotation;
+    private Vector3 weaponStartLocalPosition;
+    private Quaternion weaponStartLocalRotation;
     private bool moveWeapon = false;
     private bool rotateWeapon = false;
     private float currentArmSpeed;
     private bool allowBlock = true;
+    private bool endBlock = false;
+    private bool newBlock = false;
 
     private void Awake()
     {
@@ -26,8 +28,10 @@ public class BlockingTrigger : MonoBehaviour
 
     private void Start()
     {
-        weaponStartPosition = weapon.transform.position;
-        weaponStartRotation = weapon.transform.rotation;
+        weaponStartLocalPosition = weapon.transform.localPosition;
+        weaponStartLocalRotation = Quaternion.identity;
+        UpdateWeaponLocalPosition(weaponStartLocalPosition);
+        UpdateWeaponLocalRotation(weaponStartLocalRotation);
     }
 
     /* private void Update()
@@ -47,9 +51,10 @@ public class BlockingTrigger : MonoBehaviour
         if (other.TryGetComponent<IDamaging>(out IDamaging damagingComponent) && other.tag != "Enemy" && allowBlock)
         {
             Debug.Log("Trigger entered");
-            targetPosition = other.bounds.center;
-
-            Vector3 direction = targetPosition - weaponStartPosition;
+            newBlock = true;
+            localTargetPosition = this.transform.InverseTransformPoint(other.bounds.center);
+            
+            Vector3 direction = localTargetPosition - weaponStartLocalPosition;
             float radianZAngle = Mathf.Atan2(direction.y, direction.x);
             float eulerZAngle = radianZAngle * Mathf.Rad2Deg;
 
@@ -59,7 +64,7 @@ public class BlockingTrigger : MonoBehaviour
 
             targetRotation = Quaternion.Euler(0f, 0f, eulerZAngle);
 
-            StartCoroutine(Block(targetPosition, targetRotation));
+            StartCoroutine(Block(localTargetPosition, targetRotation));
 
             //moveWeapon = true;
             //rotateWeapon = true;
@@ -82,26 +87,32 @@ public class BlockingTrigger : MonoBehaviour
     private IEnumerator Block(Vector3 targetPosition, Quaternion targetRotation)
     {
         allowBlock = false;
-        while (!UpdateWeaponRotation(targetRotation) || !UpdateWeaponPosition(targetPosition))
+        float blockStartTime = Time.time;
+        while (!UpdateWeaponLocalRotation(targetRotation) || !UpdateWeaponLocalPosition(targetPosition))
+        {
+            yield return null;
+        }
+        while (!endBlock && Time.time < blockStartTime + 0.3f)
         {
             yield return null;
         }
         currentArmSpeed = 3f;
-        while (!UpdateWeaponRotation(weaponStartRotation) || !UpdateWeaponPosition(weaponStartPosition))
+        while (!UpdateWeaponLocalRotation(weaponStartLocalRotation) || !UpdateWeaponLocalPosition(weaponStartLocalPosition))
         {
             yield return null;
         }
         currentArmSpeed = blockSpeed;
         allowBlock = true;
+        endBlock = false;
     }
 
-    private bool UpdateWeaponPosition(Vector3 target)
+    private bool UpdateWeaponLocalPosition(Vector3 target)
     {
-        weapon.transform.position = Vector3.MoveTowards(weapon.transform.position, target, currentArmSpeed * Time.deltaTime);
-
-        if (Vector3.Distance(weapon.transform.position, target) < 0.01f || Vector3.Distance(weaponStartPosition, weapon.transform.position) >= armLength)
+        weapon.transform.localPosition = Vector3.MoveTowards(weapon.transform.localPosition, target, currentArmSpeed * Time.deltaTime);
+        if (Vector3.Distance(weaponStartLocalPosition, weapon.transform.localPosition) >= armLength) return true;
+        if (Vector3.Distance(weapon.transform.localPosition, target) < 0.01f)
         {
-            weapon.transform.position = target;
+            weapon.transform.localPosition = target;
             return true;
         }
         return false;
@@ -120,15 +131,20 @@ public class BlockingTrigger : MonoBehaviour
         return false;
     }*/
 
-    private bool UpdateWeaponRotation(Quaternion target)
+    private bool UpdateWeaponLocalRotation(Quaternion target)
     {
-        weapon.transform.rotation = Quaternion.Slerp(weapon.transform.rotation, target, blockRotationSpeed * Time.deltaTime);
+        weapon.transform.localRotation = Quaternion.Slerp(weapon.transform.localRotation, target, blockRotationSpeed * Time.deltaTime);
 
-        if (Quaternion.Angle(target, weapon.transform.rotation) < 0.01f)
+        if (Quaternion.Angle(target, weapon.transform.localRotation) < 0.01f)
         {
-            weapon.transform.rotation = target;
+            weapon.transform.localRotation = target;
             return true;
         }
         return false;
+    }
+
+    public void EndBlock()
+    {
+        endBlock = true;
     }
 }
