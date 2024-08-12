@@ -8,6 +8,8 @@ public class Damage : MonoBehaviour, IDamaging
 
     public virtual float DamageAmount => maxDamage;
 
+    public virtual Vector3 CenterOfMass => this.transform.position;
+
     public virtual void InflictDamage(IDamageable target)
     {
         if (target != null)

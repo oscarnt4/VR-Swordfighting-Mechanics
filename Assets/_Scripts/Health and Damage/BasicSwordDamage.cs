@@ -16,8 +16,10 @@ public class BasicSwordDamage : Damage
     [SerializeField] float timeBectweenConsecutiveHits = 0.3f;
     [Header("Stun")]
     [SerializeField] float stunTimePerDamageAmount = 0.015f;
+    [Header("Positional Info")]
     [SerializeField] Transform swordTip;
     [SerializeField] Transform head;
+    [SerializeField] Transform centerOfMass;
     [Header("Visuals")]
     [SerializeField] Renderer _renderer;
     [SerializeField] BlockingTrigger enemyBlockingTrigger;
@@ -33,6 +35,7 @@ public class BasicSwordDamage : Damage
     private bool canAttack = true;
 
     public override float DamageAmount => damageAmount;
+    public override Vector3 CenterOfMass => centerOfMass.position;
 
     private void Awake()
     {
@@ -44,10 +47,10 @@ public class BasicSwordDamage : Damage
         head = Camera.main.transform;
         simpleInteractable.selectEntered.AddListener(AttachMomentumTracker);
         simpleInteractable.selectExited.AddListener(RemoveMomentumTracker);
-        if (this.transform.parent.GetComponent<MomentumTracker>() != null)
+        /*if (this.transform.parent.GetComponent<MomentumTracker>() != null)
         {
             StartCoroutine(AttachTrackerCoroutine());
-        }
+        }*/
     }
     private void Update()
     {
@@ -75,11 +78,9 @@ public class BasicSwordDamage : Damage
     {
         if (!isStunned && canAttack)
         {
-            BasicSwordDamage swordDamage = collision.gameObject.GetComponent<BasicSwordDamage>();
-            IDamageable damageable = collision.gameObject.GetComponent<IDamageable>();
 
             // Implement stun
-            if (swordDamage != null)
+            if (collision.gameObject.TryGetComponent<EnemySwordDamage>(out EnemySwordDamage swordDamage))
             {
                 canAttack = false;
 
@@ -96,7 +97,7 @@ public class BasicSwordDamage : Damage
                 }
             }
             // Inflict damage
-            else if (damageable != null && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
+            else if (collision.gameObject.TryGetComponent<IDamageable>(out IDamageable damageable) && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
             {
                 canAttack = false;
 
@@ -179,11 +180,6 @@ public class BasicSwordDamage : Damage
         //grabableObject.ReturnObjectToGrabPosition();
         handController.enabled = true;
         isStunned = false;
-    }
-
-    private void MoveSwordIntoGrabbedPosition()// move sword into correct hand position before attaching wrist (also used for after the stun)
-    {
-
     }
 
 }

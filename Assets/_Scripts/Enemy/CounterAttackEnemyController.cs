@@ -18,30 +18,39 @@ public class CounterAttackEnemyController : MonoBehaviour
 
     private EnemyStateMachine _stateMachine;
     private EnemyChasingState _chasingState;
+    private EnemyVerticalSlashState _verticalSlashState;
 
     private Damage[] potentialThreats;
     private NavMeshAgent _navMeshAgent;
+    private Animator _animator;
 
     private Vector3 handStartLocalPosition;
-    private Quaternion weaponStartLocalRotation;
+    private Quaternion handStartLocalRotation;
     private Vector3 localTargetPosition;
     private Quaternion localTargetRotation;
+
+    private bool isSlashing = false;
 
     private void Awake()
     {
         _stateMachine = new EnemyStateMachine();
         _chasingState = new EnemyChasingState(this, _stateMachine);
+        _verticalSlashState = new EnemyVerticalSlashState(this, _stateMachine);
     }
 
     void Start()
     {
         potentialThreats = FindObjectsOfType<Damage>();
         _navMeshAgent = GetComponent<NavMeshAgent>();
+        _animator = GetComponent<Animator>();
+
+        _animator.enabled = false;
 
         handStartLocalPosition = hand.transform.localPosition;
-        weaponStartLocalRotation = Quaternion.identity;
+        handStartLocalRotation = Quaternion.identity;
 
         _stateMachine.ChangeState(_chasingState);
+
     }
 
     void Update()
@@ -52,35 +61,77 @@ public class CounterAttackEnemyController : MonoBehaviour
     public void EnterChase()
     {
         _navMeshAgent.SetDestination(Camera.main.transform.position);
+        _animator.enabled = false;
     }
 
     public void ExecuteChase()
     {
         ExecuteBlock();
         LookAtPlayer();
-        if(Vector3.Distance(this.transform.position, Camera.main.transform.position) < stoppingDistanceFromPlayer)
+        if (Vector3.Distance(this.transform.position, Camera.main.transform.position) < stoppingDistanceFromPlayer)
         {
             _navMeshAgent.isStopped = true;
-        } else
+        }
+        else
         {
             _navMeshAgent.isStopped = false;
             _navMeshAgent.SetDestination(Camera.main.transform.position);
         }
     }
 
+    public void ExitChase()
+    {
+        _navMeshAgent.SetDestination(this.transform.position);
+        _navMeshAgent.isStopped = true;
+    }
+
+    public void ExecuteVerticalSlash()
+    {
+        if (!isSlashing && UpdateHandLocalPosition(handStartLocalPosition) && UpdateHandLocalRotation(handStartLocalRotation))
+        {
+            isSlashing = true;
+            _animator.enabled = true;
+            _animator.Play("Enemy_SlashVerticalDown", 0, 0f);
+        }
+
+        if (isSlashing)
+        {
+            AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName("Enemy_SlashVerticalDown"))
+            {
+                Debug.Log(stateInfo.normalizedTime);
+                if (stateInfo.normalizedTime >= 1.0f)
+                {
+                    isSlashing = false;
+                    _stateMachine.ChangeState(_chasingState);
+                }
+            }
+        }
+    }
+
+    public void ExitVerticalSlash()
+    {
+        _animator.Play("Default", 0, 0f);
+        _animator.Rebind();
+    }
+
+    public bool CanExitVerticalSlash()
+    {
+        return !isSlashing;
+    }
+
     private void ExecuteBlock()
     {
         localTargetPosition = handStartLocalPosition;
-        localTargetRotation = weaponStartLocalRotation;
+        localTargetRotation = handStartLocalRotation;
 
         foreach (Damage threat in potentialThreats)
         {
-            if (/*threat.DamageAmount > 0 &&*/ threat.tag != "Enemy" && Vector3.Distance(this.transform.position, threat.transform.position) <= blockReactionDistance)
+            if (/*threat.DamageAmount > 0 &&*/ threat.tag != "Enemy" && Vector3.Distance(this.transform.position, threat.CenterOfMass) <= blockReactionDistance)
             {
-                Vector3 threatLocalPosition = this.transform.InverseTransformPoint(threat.transform.position);
+                Vector3 threatLocalPosition = this.transform.InverseTransformPoint(threat.CenterOfMass);
                 Vector3 direction = (threatLocalPosition - handStartLocalPosition).normalized;
                 localTargetPosition = handStartLocalPosition + new Vector3(direction.x, direction.y, 0f) * armLength;
-                Debug.Log("Start Position: " + handStartLocalPosition + " || Target Position: " + localTargetPosition);
 
                 float radianZAngle = Mathf.Atan2(direction.y, direction.x);
                 float eulerZAngle = radianZAngle * Mathf.Rad2Deg;
@@ -93,7 +144,7 @@ public class CounterAttackEnemyController : MonoBehaviour
             }
         }
         UpdateHandLocalPosition(localTargetPosition);
-        UpdateWeaponLocalRotation(localTargetRotation);
+        UpdateHandLocalRotation(localTargetRotation);
     }
 
     private bool UpdateHandLocalPosition(Vector3 target)
@@ -107,7 +158,7 @@ public class CounterAttackEnemyController : MonoBehaviour
         return false;
     }
 
-    private bool UpdateWeaponLocalRotation(Quaternion target)
+    private bool UpdateHandLocalRotation(Quaternion target)
     {
         hand.transform.localRotation = Quaternion.Slerp(hand.transform.localRotation, target, blockRotationSpeed * Time.deltaTime);
 
@@ -123,5 +174,25 @@ public class CounterAttackEnemyController : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(Camera.main.transform.position - this.transform.position, Vector3.up);
         lookRotation.eulerAngles = new Vector3(0f, lookRotation.eulerAngles.y, 0f);
         this.transform.rotation = Quaternion.Slerp(this.transform.rotation, lookRotation, turnSpeed * Time.deltaTime);
+    }
+
+    public void ImplementStun(float stunTime)
+    {
+        //StartCoroutine(StunCoroutine(stunTime));
+    }
+
+    private IEnumerator StunCoroutine(float stunTime)
+    {
+        _animator.speed = 0f;
+        yield return new WaitForSeconds(stunTime);
+        _animator.speed = 1f;
+        _animator.Play("Default", 0, 0f);
+        _animator.Rebind();
+        _animator.enabled = false;
+    }
+
+    public void Block()
+    {
+        _stateMachine.ChangeState(_verticalSlashState);
     }
 }
