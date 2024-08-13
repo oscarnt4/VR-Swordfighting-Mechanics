@@ -19,6 +19,7 @@ public class CounterAttackEnemyController : MonoBehaviour
     private EnemyStateMachine _stateMachine;
     private EnemyChasingState _chasingState;
     private EnemyVerticalSlashState _verticalSlashState;
+    private EnemyStunState _stunState;
 
     private Damage[] potentialThreats;
     private NavMeshAgent _navMeshAgent;
@@ -30,12 +31,15 @@ public class CounterAttackEnemyController : MonoBehaviour
     private Quaternion localTargetRotation;
 
     private bool isSlashing = false;
+    private float currentStunTime = 0f;
+    private float stunStartTime = 0f;
 
     private void Awake()
     {
         _stateMachine = new EnemyStateMachine();
         _chasingState = new EnemyChasingState(this, _stateMachine);
         _verticalSlashState = new EnemyVerticalSlashState(this, _stateMachine);
+        _stunState = new EnemyStunState(this, _stateMachine);
     }
 
     void Start()
@@ -102,8 +106,10 @@ public class CounterAttackEnemyController : MonoBehaviour
                 Debug.Log(stateInfo.normalizedTime);
                 if (stateInfo.normalizedTime >= 1.0f)
                 {
-                    isSlashing = false;
+                    _animator.Play("Default", 0, 0f);
+                    _animator.Rebind();
                     _stateMachine.ChangeState(_chasingState);
+                    //_stateMachine.ChangeState(_verticalSlashState); //test
                 }
             }
         }
@@ -111,13 +117,44 @@ public class CounterAttackEnemyController : MonoBehaviour
 
     public void ExitVerticalSlash()
     {
-        _animator.Play("Default", 0, 0f);
-        _animator.Rebind();
+        isSlashing = false;
     }
 
-    public bool CanExitVerticalSlash()
+    public bool CanEnterVerticalSlash(IState currentState)
     {
-        return !isSlashing;
+        return !(currentState is EnemyVerticalSlashState);
+    }
+
+    public void EnterStun()
+    {
+        stunStartTime = Time.time;
+        _animator.speed = 0f;
+    }
+
+    public void ExecuteStun()
+    {
+        if(Time.time >= stunStartTime + 2f/*currentStunTime*/)
+        {
+            _animator.speed = 1f;
+            _stateMachine.ChangeState(_chasingState);
+        }
+    }
+
+    public void ExitStun()
+    {
+        _animator.Play("Default", 0, 0f);
+        _animator.Rebind();
+        _animator.enabled = false;
+    }
+
+    public bool CanEnterStun(IState currentState)
+    {
+        return currentState is EnemyVerticalSlashState;
+    }
+
+    public bool CanExitStun()
+    {
+        return Time.time >= stunStartTime + 2f/*currentStunTime*/;
     }
 
     private void ExecuteBlock()
@@ -178,17 +215,8 @@ public class CounterAttackEnemyController : MonoBehaviour
 
     public void ImplementStun(float stunTime)
     {
-        //StartCoroutine(StunCoroutine(stunTime));
-    }
-
-    private IEnumerator StunCoroutine(float stunTime)
-    {
-        _animator.speed = 0f;
-        yield return new WaitForSeconds(stunTime);
-        _animator.speed = 1f;
-        _animator.Play("Default", 0, 0f);
-        _animator.Rebind();
-        _animator.enabled = false;
+        currentStunTime = stunTime;
+        _stateMachine.ChangeState(_stunState);
     }
 
     public void Block()

@@ -52,11 +52,42 @@ public class EnemyVerticalSlashState : CounterAttackEnemyBaseState
 
     public override bool CanEnter(IState currentState)
     {
-        return true;
+        return _enemy.CanEnterVerticalSlash(currentState);
     }
 
     public override bool CanExit()
     {
-        return _enemy.CanExitVerticalSlash();
+        return true;
+    }
+}
+
+public class EnemyStunState : CounterAttackEnemyBaseState
+{
+    public EnemyStunState(CounterAttackEnemyController _enemy, EnemyStateMachine _stateMachine) : base(_enemy, _stateMachine) { }
+    public override void Enter()
+    {
+        Debug.Log("Enemy: Entering Stun State");
+        _enemy.EnterStun();
+    }
+
+    public override void Execute()
+    {
+        _enemy.ExecuteStun();
+    }
+
+    public override void Exit()
+    {
+        Debug.Log("Enemy: Exiting Stun State");
+        _enemy.ExitStun();
+    }
+
+    public override bool CanEnter(IState currentState)
+    {
+        return _enemy.CanEnterStun(currentState);
+    }
+
+    public override bool CanExit()
+    {
+        return _enemy.CanExitStun();
     }
 }
