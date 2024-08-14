@@ -22,12 +22,15 @@ public class GrabableObject : MonoBehaviour
     private Vector3 currentVelocity;
     private ConfigurableJoint attachedJoint;
 
+    private int originalLayer;
+
     private GameObject hand;//test
 
     private void Awake()
     {
         simpleInteractable = GetComponent<XRSimpleInteractable>();
         _rigidbody = GetComponent<Rigidbody>();
+        originalLayer = this.gameObject.layer;
     }
 
     void Start()
@@ -52,17 +55,20 @@ public class GrabableObject : MonoBehaviour
         //Deactivate controller hands
         args.interactorObject.transform.GetChild(0).gameObject.SetActive(false);
 
-        //Match anchor rotation
-        //Quaternion rotationOffset = Quaternion.Inverse(args.interactorObject.transform.rotation) * grabAnchor.transform.rotation;
-        //this.transform.rotation = rotationOffset * this.transform.rotation;
         //Match anchor position
         Vector3 offset = args.interactorObject.transform.position - grabAnchor.transform.position;
         this.transform.position += offset;
+
+        //Match anchor rotation
+        Quaternion rotationOffset = args.interactorObject.transform.rotation * Quaternion.Inverse(grabAnchor.transform.rotation);
+        this.transform.rotation = rotationOffset * this.transform.rotation;
+
         //Attach sword to controller hands
         this.transform.SetParent(args.interactorObject.transform);
+        SetLayerForAllDescendants(this.gameObject, args.interactorObject.transform.gameObject.layer);
         attachedJoint = args.interactorObject.transform.GetComponent<ConfigurableJoint>();
         attachedJoint.connectedBody = _rigidbody;
-    } 
+    }
 
     private void DisableGrab(SelectExitEventArgs args)
     {
@@ -75,13 +81,19 @@ public class GrabableObject : MonoBehaviour
             rightGrabbedHand.SetActive(false);
         }
         attachedJoint.connectedBody = null;
+        SetLayerForAllDescendants(this.gameObject, originalLayer);
         this.transform.SetParent(null);
         args.interactorObject.transform.GetChild(0).gameObject.SetActive(true);
         this.GetComponent<Rigidbody>().useGravity = true;
     }
 
-    public void ReturnObjectToGrabPosition()
+    private void SetLayerForAllDescendants(GameObject obj, int layer)
     {
+        obj.layer = layer;
 
+        foreach(Transform child in obj.transform)
+        {
+            SetLayerForAllDescendants(child.gameObject,layer);
+        }
     }
 }

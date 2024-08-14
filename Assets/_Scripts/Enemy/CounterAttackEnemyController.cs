@@ -54,6 +54,7 @@ public class CounterAttackEnemyController : MonoBehaviour
         handStartLocalRotation = Quaternion.identity;
 
         _stateMachine.ChangeState(_chasingState);
+        //_stateMachine.ChangeState(_verticalSlashState);//test
 
     }
 
@@ -95,15 +96,17 @@ public class CounterAttackEnemyController : MonoBehaviour
         {
             isSlashing = true;
             _animator.enabled = true;
-            _animator.Play("Enemy_SlashVerticalDown", 0, 0f);
+
+            int randomIndex = Random.Range(0, 2);
+            if (randomIndex == 0) _animator.Play("Enemy_SlashVerticalDown", 0, 0f);
+            else _animator.Play("Enemy_SlashHorizontal", 0, 0f);
         }
 
         if (isSlashing)
         {
             AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsName("Enemy_SlashVerticalDown"))
+            if (stateInfo.IsName("Enemy_SlashVerticalDown") || stateInfo.IsName("Enemy_SlashHorizontal"))
             {
-                Debug.Log(stateInfo.normalizedTime);
                 if (stateInfo.normalizedTime >= 1.0f)
                 {
                     _animator.Play("Default", 0, 0f);
@@ -123,6 +126,7 @@ public class CounterAttackEnemyController : MonoBehaviour
     public bool CanEnterVerticalSlash(IState currentState)
     {
         return !(currentState is EnemyVerticalSlashState);
+                //true; //test
     }
 
     public void EnterStun()
@@ -133,7 +137,7 @@ public class CounterAttackEnemyController : MonoBehaviour
 
     public void ExecuteStun()
     {
-        if(Time.time >= stunStartTime + 2f/*currentStunTime*/)
+        if(Time.time >= stunStartTime + currentStunTime)
         {
             _animator.speed = 1f;
             _stateMachine.ChangeState(_chasingState);
@@ -154,7 +158,7 @@ public class CounterAttackEnemyController : MonoBehaviour
 
     public bool CanExitStun()
     {
-        return Time.time >= stunStartTime + 2f/*currentStunTime*/;
+        return Time.time >= stunStartTime + currentStunTime;
     }
 
     private void ExecuteBlock()

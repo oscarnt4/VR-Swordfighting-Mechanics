@@ -9,7 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit.AffordanceSystem.Receiver.Primitives;
 public class EnemySwordDamage : Damage
 {
     [Header("Stun")]
-    [SerializeField] float stunTimePerDamageAmount = 0.015f;
+    [SerializeField] float stunTimePerDamageAmount = 0.15f;
     [Header("Positional Info")]
     [SerializeField] Transform swordTip;
     [SerializeField] Transform head;
@@ -23,9 +23,11 @@ public class EnemySwordDamage : Damage
 
     private void OnCollisionEnter(Collision collision)
     {
+        Debug.Log("Collision detected");
         // Detect stun
         if (collision.gameObject.TryGetComponent<BasicSwordDamage>(out BasicSwordDamage swordDamage))
         {
+            Debug.Log("Sword collision");
             float collidedWithPointDistance = swordDamage.GetTipDistance();
             float thisPointDistance = this.GetTipDistance();
 
@@ -41,6 +43,7 @@ public class EnemySwordDamage : Damage
         // Inflict damage
         else if (collision.gameObject.TryGetComponent<IDamageable>(out IDamageable damageable))
         {
+            Debug.Log("Damageable collision");
             InflictDamage(damageable);
         }
 

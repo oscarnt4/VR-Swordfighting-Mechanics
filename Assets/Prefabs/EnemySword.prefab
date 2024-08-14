@@ -117,8 +117,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxDamage: 10
-  head: {fileID: 0}
+  stunTimePerDamageAmount: 0.05
   swordTip: {fileID: 6705623132209803696}
+  head: {fileID: 0}
 --- !u!4 &6705623132209803696 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2595166284582586639, guid: de2b8f26e333bab43844c92018dbd701, type: 3}
