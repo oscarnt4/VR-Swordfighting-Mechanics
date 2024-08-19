@@ -97,15 +97,18 @@ public class CounterAttackEnemyController : MonoBehaviour
             isSlashing = true;
             _animator.enabled = true;
 
-            int randomIndex = Random.Range(0, 2);
-            if (randomIndex == 0) _animator.Play("Enemy_SlashVerticalDown", 0, 0f);
-            else _animator.Play("Enemy_SlashHorizontal", 0, 0f);
+            int randomIndex = Random.Range(0, 4);
+
+            if (randomIndex == 0) _animator.Play("Enemy_SlashVerticalDown1", 0, 0f);
+            else if (randomIndex == 1) _animator.Play("Enemy_SlashVerticalDown2", 0, 0f);
+            else if (randomIndex == 2) _animator.Play("Enemy_SlashHorizontal", 0, 0f);
+            else if (randomIndex == 3) _animator.Play("Enemy_DoubleCrossSlash", 0, 0f);
         }
 
         if (isSlashing)
         {
             AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsName("Enemy_SlashVerticalDown") || stateInfo.IsName("Enemy_SlashHorizontal"))
+            if (stateInfo.IsName("Enemy_SlashVerticalDown1") || stateInfo.IsName("Enemy_SlashVerticalDown2") || stateInfo.IsName("Enemy_SlashHorizontal") || stateInfo.IsName("Enemy_DoubleCrossSlash"))
             {
                 if (stateInfo.normalizedTime >= 1.0f)
                 {
@@ -126,7 +129,7 @@ public class CounterAttackEnemyController : MonoBehaviour
     public bool CanEnterVerticalSlash(IState currentState)
     {
         return !(currentState is EnemyVerticalSlashState);
-                //true; //test
+               // true; //test
     }
 
     public void EnterStun()

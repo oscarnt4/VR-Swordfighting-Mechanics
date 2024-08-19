@@ -37,7 +37,6 @@ public class BasicEnemyHealth : Health
     {
         base.Die();
         Instantiate(basicEnemyPrefab);
-        Destroy(this.gameObject);
     }
 
     private void UpdateColour()

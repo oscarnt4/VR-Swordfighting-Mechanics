@@ -21,6 +21,7 @@ public class EnemyStateMachine
             _currentState.Exit();
             _previousState = _currentState;
         }
+
         _currentState = newState;
         _currentState.Enter();
     }

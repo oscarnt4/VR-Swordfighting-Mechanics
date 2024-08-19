@@ -80,7 +80,7 @@ public class BasicSwordDamage : Damage
         {
 
             // Implement stun
-            if (collision.gameObject.TryGetComponent<EnemySwordDamage>(out EnemySwordDamage swordDamage))
+            if (collision.gameObject.TryGetComponent<ComplexEnemySwordDamage>(out ComplexEnemySwordDamage swordDamage))
             {
                 canAttack = false;
 
