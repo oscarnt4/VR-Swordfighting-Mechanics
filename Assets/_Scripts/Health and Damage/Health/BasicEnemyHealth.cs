@@ -5,15 +5,7 @@ using UnityEngine;
 public class BasicEnemyHealth : Health
 {
     [SerializeField] Renderer _renderer;
-    [SerializeField] GameObject basicEnemyPrefab;
-
-    private BlockingTrigger blockingTrigger;
-
-    private void Awake()
-    {
-        blockingTrigger = GetComponent<BlockingTrigger>();
-        //_renderer = GetComponent<Renderer>();
-    }
+    [SerializeField] GameObject sword;
 
     public override void Start()
     {
@@ -36,7 +28,7 @@ public class BasicEnemyHealth : Health
     protected override void Die()
     {
         base.Die();
-        Instantiate(basicEnemyPrefab);
+        sword.transform.parent = null;
     }
 
     private void UpdateColour()

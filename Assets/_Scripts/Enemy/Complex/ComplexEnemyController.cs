@@ -94,7 +94,7 @@ public class ComplexEnemyController : MonoBehaviour
 
     public void EnterStayWithinPlayerRange()
     {
-        RandomiseStateTimeWindow(1f, 3f);
+        RandomiseStateTimeWindow(0.3f, 2f);
 
         _navMeshAgent.updateRotation = false;
         _navMeshAgent.SetDestination(Camera.main.transform.position);
@@ -117,7 +117,7 @@ public class ComplexEnemyController : MonoBehaviour
 
     public void EnterStayOutsidePlayerRange()
     {
-        RandomiseStateTimeWindow(1f, 3f);
+        RandomiseStateTimeWindow(0.3f, 2f);
 
         _navMeshAgent.updateRotation = false;
         _navMeshAgent.SetDestination(Camera.main.transform.position);
@@ -221,6 +221,8 @@ public class ComplexEnemyController : MonoBehaviour
 
     public void ExecuteRandomStationaryAttack()
     {
+        FollowPlayerAtSpecificDistance(distanceWithinPlayerRange);
+
         if (!isSlashing && UpdateHandLocalPosition(handStartLocalPosition) && UpdateHandLocalRotation(handStartLocalRotation))
         {
             isSlashing = true;
@@ -243,7 +245,6 @@ public class ComplexEnemyController : MonoBehaviour
                 _animator.Rebind();
                 _animator.enabled = false;
                 RandomStateTransition();
-                Debug.Log("slash complete");
             }
         }
     }
@@ -355,31 +356,29 @@ public class ComplexEnemyController : MonoBehaviour
 
     private void RandomStateTransition()
     {
-        int rnd = Random.Range(0, 11);
+        int rnd = Random.Range(0, 9);
 
         switch (rnd)
         {
-            // 4/11 probability to stay within player range
+            // 4/9 probability to stay within player range
             case 0:
             case 1:
-            case 2:
-            case 3:
                 _stateMachine.ChangeState(_stayWithinPlayerRangeState);
                 break;
-            // 1/11 probability to stay outside player range
-            case 4:
+            // 1/9 probability to stay outside player range
+            case 2:
                 _stateMachine.ChangeState(_stayOutsidePlayerRangeState);
                 break;
-            // 2/11 Probability to perform a random stationary attack
-            case 5:
-            case 6:
+            // 2/9 Probability to perform a random stationary attack
+            case 3:
+            case 4:
                 _stateMachine.ChangeState(_randomStationaryAttackState);
                 break;
-            // 4/11 probability to perform a random sprinting attack
+            // 4/9 probability to perform a random sprinting attack
+            case 5:
+            case 6:
             case 7:
             case 8:
-            case 9:
-            case 10:
                 _stateMachine.ChangeState(_randomSprintAttackState);
                 break;
             default:
@@ -391,25 +390,30 @@ public class ComplexEnemyController : MonoBehaviour
 
     private void DetectIncommingAttack()
     {
+        MomentumTracker tracker;
+
         foreach (Damage threat in potentialThreats)
         {
             if (threat.tag != "Enemy" 
                 && Vector3.Distance(this.transform.position, threat.CenterOfMass) <= blockReactionDistance 
-                && threat.transform.parent.GetComponent<MomentumTracker>().largestDistanceTravelled > 0.25f)
+                && threat.transform.parent.TryGetComponent<MomentumTracker>(out tracker) /*&& tracker.largestDistanceTravelled > 0.25f*/)
             {
-                currentThreat = threat;
-
-                int rnd = Random.Range(0, oneOverBackdashProbability); // Probability of a back dash
-
-                if (rnd == 0)
+                if (tracker.largestDistanceTravelled > 0.25f)
                 {
-                    _stateMachine.ChangeState(_backDashState);
+                    currentThreat = threat;
+
+                    int rnd = Random.Range(0, oneOverBackdashProbability); // Probability of a back dash
+
+                    if (rnd == 0)
+                    {
+                        _stateMachine.ChangeState(_backDashState);
+                    }
+                    else
+                    {
+                        _stateMachine.ChangeState(_blockState);
+                    }
+                    break;
                 }
-                else
-                {
-                    _stateMachine.ChangeState(_blockState);
-                }
-                break;
             }
         }
     }

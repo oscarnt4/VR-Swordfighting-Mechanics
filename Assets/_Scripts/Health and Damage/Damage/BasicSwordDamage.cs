@@ -59,10 +59,11 @@ public class BasicSwordDamage : Damage
             //Debug
             Color color = Color.Lerp(Color.green, Color.red, momentumTracker.largestDistanceTravelled > maxDamageSwingDistance ? 1 : momentumTracker.largestDistanceTravelled / maxDamageSwingDistance);
             _renderer.material.color = Color.HSVToRGB(color.grayscale, 1f, 1f);
-        }
-        if (!canAttack)
-        {
-            canAttack = CalculateMomentumDamage() == 0;
+
+            if (!canAttack)
+            {
+                canAttack = CalculateMomentumDamage() == 0;
+            }
         }
     }
 
@@ -102,7 +103,11 @@ public class BasicSwordDamage : Damage
                 canAttack = false;
 
                 if (momentumTrackerAttached) CalculateMomentumDamage();
-                else CalculateVelocityDamage();
+                else
+                {
+                    CalculateVelocityDamage();
+                    canAttack = true;
+                }
 
                 InflictDamage(damageable);
                 timeOfLastHit = DateTime.Now;
@@ -124,6 +129,7 @@ public class BasicSwordDamage : Damage
 
     private void RemoveMomentumTracker(SelectExitEventArgs args)
     {
+        Debug.Log("Momentum tracker removed");
         momentumTracker = null;
         momentumTrackerAttached = false;
     }

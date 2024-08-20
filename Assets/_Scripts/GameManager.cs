@@ -4,16 +4,19 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 
 public class GameManager : MonoBehaviour
 {
     [SerializeField] TMP_Text winLoseText;
     [SerializeField] TMP_Text scoreText;
-    [SerializeField] InputActionManager inputActionManager;
     public static GameManager Instance { get; private set; }
 
+    private InputActionManager inputActionManager;
     private Health[] healths;
+    private ComplexEnemyController complexEnemyController; 
+    private XRSimpleInteractable _swordInteractable;
 
     private int wins = 0;
     private int losses = 0;
@@ -34,14 +37,21 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        inputActionManager = FindObjectOfType<InputActionManager>();
         healths = FindObjectsOfType<Health>();
+        complexEnemyController = FindObjectOfType<ComplexEnemyController>();
+        _swordInteractable = FindObjectOfType<XRSimpleInteractable>();
+
+        complexEnemyController.enabled = false;
+
         winLoseText.SetText("");
         UpdateScore();
     }
 
     private void Update()
     {
-        if(!gameOver) CheckHealths();
+        if(!gameOver) CheckHealths(); 
+        if (_swordInteractable.isSelected) complexEnemyController.enabled = true;
     }
 
     private void OnEnable()
@@ -56,11 +66,18 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        inputActionManager = FindObjectOfType<InputActionManager>();
+        healths = FindObjectsOfType<Health>();
+        complexEnemyController = FindObjectOfType<ComplexEnemyController>();
+        _swordInteractable = FindObjectOfType<XRSimpleInteractable>();
+
+        complexEnemyController.enabled = false;
+
         winLoseText = GameObject.Find("WinLoseText").GetComponent<TMP_Text>();
         scoreText = GameObject.Find("ScoreText").GetComponent<TMP_Text>();
-        healths = FindObjectsOfType<Health>();
         winLoseText.SetText("");
         UpdateScore();
+
         gameOver = false;
     }
 
@@ -70,16 +87,17 @@ public class GameManager : MonoBehaviour
         {
             if(health.CurrentHealth <= 0)
             {
-                if(health is BasicPlayerHealth)
+                gameOver = true;
+                if (health is BasicPlayerHealth)
                 {
+                    Debug.Log("..::PLAYER LOSES::..");
                     PlayerDeath();
-                    gameOver = true;
                     break;
                 }
                 if(health is BasicEnemyHealth)
                 {
+                    Debug.Log("!!!.PLAYER WINS.!!!");
                     EnemyDeath();
-                    gameOver = true;
                     break;
                 }
             }
@@ -91,6 +109,7 @@ public class GameManager : MonoBehaviour
         losses++;
         winLoseText.SetText("..YOU LOSE..");
         UpdateScore();
+        inputActionManager.DisableInput();
         StartCoroutine(GameOverCoroutine());
     }
 
@@ -109,8 +128,12 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GameOverCoroutine()
     {
-        inputActionManager.DisableInput();
+        Debug.Log("Current Score => " + scoreText.text);
+
+        complexEnemyController.enabled = false;
+
         yield return new WaitForSeconds(5f);
+
         inputActionManager.EnableInput();
         winLoseText.SetText("");
 
