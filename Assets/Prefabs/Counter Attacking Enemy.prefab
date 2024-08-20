@@ -76,7 +76,7 @@ MonoBehaviour:
   maxHealth: 100
   currentHealth: 0
   _renderer: {fileID: 4184699991095899685}
-  basicEnemyPrefab: {fileID: 853554485588916913}
+  sword: {fileID: 0}
 --- !u!114 &3089201392142751822
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -331,7 +331,7 @@ public class ComplexEnemyController : MonoBehaviour
 
     public bool CanEnterStun(IState currentState)
     {
-        return currentState is RandomStationaryAttack;
+        return currentState is RandomStationaryAttack || currentState is RandomSprintAttack;
     }
 
     public bool CanExitStun()

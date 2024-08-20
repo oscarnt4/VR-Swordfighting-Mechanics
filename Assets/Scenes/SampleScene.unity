@@ -2879,10 +2879,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Counter Attacking Enemy
       objectReference: {fileID: 0}
-    - target: {fileID: 853554485588916913, guid: 93049e0e2e34bb246b5c12e33cef116b, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2939,6 +2935,10 @@ PrefabInstance:
     - target: {fileID: 853554485588916913, guid: e1a989d3618c0c2439d45ee6df8fb6d9, type: 3}
       propertyPath: m_Name
       value: Complex Enemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 853554485588916913, guid: e1a989d3618c0c2439d45ee6df8fb6d9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
