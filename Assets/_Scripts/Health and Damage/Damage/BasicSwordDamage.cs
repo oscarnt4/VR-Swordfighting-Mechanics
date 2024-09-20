@@ -97,6 +97,22 @@ public class BasicSwordDamage : Damage
                     if(enemyBlockingTrigger != null) enemyBlockingTrigger.EndBlock();
                 }
             }
+            if (collision.gameObject.TryGetComponent<EnemySwordDamage>(out EnemySwordDamage swordDamage2))
+            {
+                canAttack = false;
+
+                float collidedWithPointDistance = swordDamage2.GetTipDistance();
+                float thisPointDistance = this.GetTipDistance();
+
+                if (thisPointDistance > collidedWithPointDistance)
+                {
+                    StartCoroutine(ImplementStun());
+                }
+                else
+                {
+                    if (enemyBlockingTrigger != null) enemyBlockingTrigger.EndBlock();
+                }
+            }
             // Inflict damage
             else if (collision.gameObject.TryGetComponent<IDamageable>(out IDamageable damageable) && DateTime.Now > timeOfLastHit.AddSeconds(timeBectweenConsecutiveHits))
             {

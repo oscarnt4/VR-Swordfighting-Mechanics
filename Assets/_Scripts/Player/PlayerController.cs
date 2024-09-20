@@ -165,7 +165,6 @@ public class PlayerController : MonoBehaviour
 
         characterController.Move(dashDirection * (dashDistance / dashDuration) * Time.deltaTime);
         float dashTime = dashStartTime + dashDuration;
-        //Debug.Log(Time.time + " || " + dashTime + " || " + (Time.time >= dashTime));
 
         return Time.time >= (dashStartTime + dashDuration);
     }
