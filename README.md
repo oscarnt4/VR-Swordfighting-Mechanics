@@ -1,3 +1,4 @@
 # VR-Swordfighting-Mechanics
 
-https://youtu.be/r5mdi3HyX_k
+
+[![VR Swordfighting Mechanics Explained](https://img.youtube.com/vi/r5mdi3HyX_k/0.jpg)](https://www.youtube.com/watch?v=r5mdi3HyX_k)
